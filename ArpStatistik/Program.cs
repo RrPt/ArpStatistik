@@ -131,9 +131,13 @@ namespace ArpStatistik
                 if (ethernetPacket.Type == EthernetPacketType.Arp)
                 {
                     ARPPacket arp = (ARPPacket) ethernetPacket.PayloadPacket;
-                    if (arp.Operation == ARPOperation.Request) return;
+
+                    //if (arp.Operation == ARPOperation.Request) return;
+
                     captureFileWriter.Write(e.Packet);
-                    Console.WriteLine("{0} At: {1}:{2}: MAC:{3} -> MAC:{4}  {5} {6} {7}  {8}",
+                    if (arp.Operation == ARPOperation.Response)  Console.ForegroundColor = ConsoleColor.Yellow;
+                    else Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine("{0} At: {1}:{2,3}: MAC:{3} -> MAC:{4}  {5} {6,8} {7} {8,15} --> {9} {10,15}",
                                       packetIndex,
                                       e.Packet.Timeval.Date.ToString(),
                                       e.Packet.Timeval.Date.Millisecond,
@@ -142,21 +146,32 @@ namespace ArpStatistik
                                       ethernetPacket.Type,
                                       arp.Operation,
                                       arp.SenderHardwareAddress,
-                                      arp.SenderProtocolAddress
+                                      arp.SenderProtocolAddress,
+                                      arp.TargetHardwareAddress,
+                                      arp.TargetProtocolAddress
                                       );
-                    if (!list.ContainsKey(arp.SenderProtocolAddress))
-                    {
-                        list.Add(arp.SenderProtocolAddress, arp.SenderHardwareAddress);
-                        File.AppendAllText(arp.SenderProtocolAddress+".txt",DateTime.Now+" "+ arp.SenderHardwareAddress);
-                    }
-                    else if(!list[arp.SenderProtocolAddress].Equals(arp.SenderHardwareAddress))
-                    {
-                        list[arp.SenderProtocolAddress] = arp.SenderHardwareAddress;
-                        File.AppendAllText(arp.SenderProtocolAddress + ".txt", DateTime.Now + " " + arp.SenderHardwareAddress);
-                    }
+                    CheckZuordnung(arp.SenderHardwareAddress, arp.SenderProtocolAddress);
+                    if (arp.Operation == ARPOperation.Response) CheckZuordnung(arp.TargetHardwareAddress, arp.TargetProtocolAddress);
+
+
 
                     packetIndex++;
                 }
+            }
+        }
+
+        private static void CheckZuordnung(PhysicalAddress mac, IPAddress ip)
+        {
+            if (!list.ContainsKey(ip))
+            {
+                list.Add(ip, mac);
+                File.AppendAllText(@"log\" + ip + ".txt", DateTime.Now + " " + mac + Environment.NewLine);
+            }
+            else if (!list[ip].Equals(mac))
+            {
+                list[ip] = mac;
+                File.AppendAllText(@"log\" + ip + ".txt", DateTime.Now + " " + mac + Environment.NewLine);
+                File.AppendAllText(@"log\MultipleMacs.txt", DateTime.Now + " " + ip + " " + mac + Environment.NewLine);
             }
         }
     }
