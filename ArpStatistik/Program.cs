@@ -411,7 +411,7 @@ namespace ArpStatistik
             {
                 list[ip] = mac;
                 File.AppendAllText(path + ip + ".txt", DateTime.Now + " " + mac + "  *" + Environment.NewLine);
-                File.AppendAllText(path + @"MultipleMacs.txt", DateTime.Now + " " + ip + " " + mac + Environment.NewLine);
+                File.AppendAllText(@"log\MultipleMacs_" + subnet + ".txt", DateTime.Now + " " + ip + " " + mac + Environment.NewLine);
             }
         }
     }
